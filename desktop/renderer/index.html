@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; font-src 'self'; connect-src 'none';">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Infinitium Shell</title>
+  <link rel="stylesheet" href="vendor/xterm.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/shell.css">
+  <link rel="stylesheet" href="css/views.css">
+</head>
+<body data-accent="cyan">
+  <div class="app">
+    <header class="titlebar" id="titlebar">
+      <div class="brand">
+        <img src="assets/infinitium.png" alt="" draggable="false">
+        <span class="brand-name">Infinitium</span>
+        <span class="brand-tag">SHELL</span>
+      </div>
+
+      <button class="cmd-trigger" id="cmd-trigger" type="button" title="Command palette (Ctrl+Shift+P)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <span>Search commands</span>
+        <kbd>Ctrl Shift P</kbd>
+      </button>
+
+      <div class="titlebar-spacer"></div>
+
+      <div class="win-controls">
+        <button id="win-min" type="button" title="Minimize" aria-label="Minimize">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg>
+        </button>
+        <button id="win-max" class="win-max" type="button" title="Maximize" aria-label="Maximize">
+          <svg class="maximize-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
+          <svg class="restore-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5"/><path d="M9 5h8a2 2 0 0 1 2 2v8"/></svg>
+        </button>
+        <button id="win-close" class="danger" type="button" title="Close" aria-label="Close">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="body">
+      <aside class="rail">
+        <nav class="rail-nav" aria-label="Views">
+          <button class="rail-btn is-active" data-nav="terminal" type="button" title="Terminal (Alt+1)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17l6-6-6-6"/><path d="M12 19h8"/></svg>
+            <span>Terminal</span>
+          </button>
+          <button class="rail-btn" data-nav="dashboard" type="button" title="Dashboard (Alt+2)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+            <span>Dashboard</span>
+          </button>
+          <button class="rail-btn" data-nav="stats" type="button" title="Statistics (Alt+3)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V12"/><path d="M10 20V5"/><path d="M16 20v-9"/><path d="M22 20H2"/></svg>
+            <span>Stats</span>
+          </button>
+          <button class="rail-btn" data-nav="settings" type="button" title="Settings (Alt+4)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="7" cy="18" r="2"/></svg>
+            <span>Settings</span>
+          </button>
+        </nav>
+
+        <div class="rail-foot">
+          <div class="pulse" id="rail-status" title="System status"></div>
+          <span class="rail-version" id="rail-version">v1.0</span>
+        </div>
+      </aside>
+
+      <main class="main">
+        <section class="view is-active" data-view="terminal" aria-label="Terminal">
+          <div class="tabbar">
+            <div class="tabs" id="tabs" role="tablist"></div>
+            <button class="tab-new" id="tab-new" type="button" title="New tab (Ctrl+Shift+T)">+</button>
+            <div class="tabbar-fill"></div>
+            <div class="term-status">
+              <span class="dot"></span>
+              <span id="term-status-text">PowerShell</span>
+            </div>
+          </div>
+          <div class="terminal-host" id="terminal-host"></div>
+        </section>
+
+        <section class="view" data-view="dashboard" aria-label="Dashboard">
+          <div class="view-scroll">
+            <div class="hero">
+              <div class="hero-copy">
+                <p class="eyebrow" id="dash-date">—</p>
+                <h1 class="hero-title"><span id="dash-greeting">Welcome</span><span class="accent-dot">.</span></h1>
+                <p class="hero-sub">Your workspace, system and shell in one place.</p>
+              </div>
+              <div class="hero-clock-wrap">
+                <div class="hero-clock" id="dash-clock">--:--</div>
+                <div class="hero-clock-label">local time</div>
+              </div>
+            </div>
+
+            <div class="quick-actions">
+              <button class="quick-btn primary" data-quick="new-tab" type="button">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                <span>New terminal</span>
+              </button>
+              <button class="quick-btn" data-quick="home" type="button">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
+                <span>Home folder</span>
+              </button>
+              <button class="quick-btn" data-quick="project" type="button">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+                <span>Project folder</span>
+              </button>
+              <button class="quick-btn" data-quick="vscode" type="button" id="quick-vscode">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6l-5 6 5 6M16 6l5 6-5 6"/></svg>
+                <span>VS Code</span>
+              </button>
+              <button class="quick-btn" data-quick="palette" type="button">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3z"/></svg>
+                <span>Command palette</span>
+                <kbd>Ctrl Shift P</kbd>
+              </button>
+            </div>
+
+            <div class="stat-grid">
+              <article class="card stat-card">
+                <div class="stat-head"><span class="stat-label">CPU</span><span class="stat-chip" id="dash-cpu-chip">—</span></div>
+                <div class="stat-value" id="dash-cpu">0<span>%</span></div>
+                <div class="meter"><i id="dash-cpu-bar"></i></div>
+                <div class="stat-foot" id="dash-cpu-foot">Sampling…</div>
+              </article>
+
+              <article class="card stat-card">
+                <div class="stat-head"><span class="stat-label">Memory</span><span class="stat-chip" id="dash-mem-chip">—</span></div>
+                <div class="stat-value" id="dash-mem">0<span>%</span></div>
+                <div class="meter mem"><i id="dash-mem-bar"></i></div>
+                <div class="stat-foot" id="dash-mem-foot">—</div>
+              </article>
+
+              <article class="card stat-card">
+                <div class="stat-head"><span class="stat-label">Disk</span><span class="stat-chip" id="dash-disk-chip">C:</span></div>
+                <div class="stat-value small" id="dash-disk">—</div>
+                <div class="meter disk"><i id="dash-disk-bar"></i></div>
+                <div class="stat-foot" id="dash-disk-foot">—</div>
+              </article>
+
+              <article class="card stat-card">
+                <div class="stat-head"><span class="stat-label">Uptime</span><span class="stat-chip">system</span></div>
+                <div class="stat-value small" id="dash-uptime">—</div>
+                <div class="meter uptime"><i></i></div>
+                <div class="stat-foot">since last boot</div>
+              </article>
+            </div>
+
+            <div class="dash-columns">
+              <article class="card system-card">
+                <div class="card-head">
+                  <div><p class="eyebrow">Machine</p><h2>System</h2></div>
+                  <span class="stat-chip" id="sys-cores">—</span>
+                </div>
+                <div class="system-grid">
+                  <div class="sys-item"><span>Host</span><strong id="sys-host">—</strong></div>
+                  <div class="sys-item"><span>OS</span><strong id="sys-os">—</strong></div>
+                  <div class="sys-item"><span>CPU</span><strong id="sys-cpu">—</strong></div>
+                  <div class="sys-item"><span>IP address</span><strong id="sys-ip">—</strong></div>
+                  <div class="sys-item"><span>Shell</span><strong id="sys-shell">—</strong></div>
+                  <div class="sys-item"><span>Runtime</span><strong id="sys-runtime">—</strong></div>
+                </div>
+              </article>
+
+              <article class="card activity-card">
+                <div class="card-head">
+                  <div><p class="eyebrow">This session</p><h2>Activity</h2></div>
+                  <span class="live-pill"><i></i>live</span>
+                </div>
+                <div class="activity-list">
+                  <div class="activity-row"><span>Commands run</span><strong id="dash-session-commands">0</strong></div>
+                  <div class="activity-row"><span>Session time</span><strong id="dash-session-time">0s</strong></div>
+                  <div class="activity-row"><span>Today</span><strong id="dash-today-commands">0</strong></div>
+                  <div class="activity-row"><span>App launches</span><strong id="dash-launches">0</strong></div>
+                </div>
+                <div class="activity-foot">
+                  <span id="dash-first-launch">—</span>
+                  <button class="link-btn" data-nav-jump="stats" type="button">View statistics
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                  </button>
+                </div>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section class="view" data-view="stats" aria-label="Statistics">
+          <div class="view-scroll">
+            <div class="view-head">
+              <div>
+                <p class="eyebrow">Telemetry</p>
+                <h1>Statistics</h1>
+                <p class="view-sub">Live resource usage and lifetime activity.</p>
+              </div>
+              <span class="live-pill"><i></i>1s refresh</span>
+            </div>
+
+            <article class="card chart-card">
+              <div class="card-head">
+                <div><h2>Resource usage</h2><p class="card-sub">Last 60 seconds</p></div>
+                <div class="legend">
+                  <span class="legend-item"><i class="cpu"></i>CPU</span>
+                  <span class="legend-item"><i class="mem"></i>Memory</span>
+                </div>
+              </div>
+              <div class="chart-wrap"><canvas id="stats-chart"></canvas></div>
+            </article>
+
+            <div class="metric-grid">
+              <article class="card metric-card">
+                <span class="metric-label">Session time</span>
+                <strong id="stat-session-time">0s</strong>
+                <span class="metric-sub" id="stat-session-sub">—</span>
+              </article>
+              <article class="card metric-card">
+                <span class="metric-label">Commands this session</span>
+                <strong id="stat-session-commands">0</strong>
+                <span class="metric-sub">counted on Enter</span>
+              </article>
+              <article class="card metric-card">
+                <span class="metric-label">Lifetime commands</span>
+                <strong id="stat-total-commands">0</strong>
+                <span class="metric-sub" id="stat-total-sub">—</span>
+              </article>
+              <article class="card metric-card">
+                <span class="metric-label">Total shell time</span>
+                <strong id="stat-total-time">0s</strong>
+                <span class="metric-sub" id="stat-launches">0 launches</span>
+              </article>
+            </div>
+
+            <article class="card week-card">
+              <div class="card-head">
+                <div><h2>Last 7 days</h2><p class="card-sub">Time spent in the shell</p></div>
+                <span class="stat-chip" id="week-total">—</span>
+              </div>
+              <div class="week-chart" id="week-chart"></div>
+            </article>
+          </div>
+        </section>
+
+        <section class="view" data-view="settings" aria-label="Settings">
+          <div class="view-scroll">
+            <div class="view-head">
+              <div>
+                <p class="eyebrow">Preferences</p>
+                <h1>Settings</h1>
+                <p class="view-sub">Changes apply instantly and persist locally.</p>
+              </div>
+            </div>
+
+            <div class="settings-grid">
+              <article class="card">
+                <div class="card-head"><h2>Appearance</h2></div>
+
+                <div class="field">
+                  <label>Accent</label>
+                  <div class="swatches" id="accent-swatches">
+                    <button data-accent="cyan" type="button" style="--swatch:#6ee7f9" title="Cyan"></button>
+                    <button data-accent="purple" type="button" style="--swatch:#c792ea" title="Purple"></button>
+                    <button data-accent="green" type="button" style="--swatch:#5be7a9" title="Green"></button>
+                    <button data-accent="amber" type="button" style="--swatch:#f5d67b" title="Amber"></button>
+                  </div>
+                </div>
+
+                <div class="field">
+                  <label for="font-size">Terminal font size <output id="font-size-out">13</output></label>
+                  <input type="range" id="font-size" min="10" max="20" step="1" value="13">
+                </div>
+
+                <div class="field">
+                  <label for="cursor-style">Cursor style</label>
+                  <select id="cursor-style">
+                    <option value="bar">Bar</option>
+                    <option value="block">Block</option>
+                    <option value="underline">Underline</option>
+                  </select>
+                </div>
+
+                <label class="switch">
+                  <input type="checkbox" id="reduce-motion">
+                  <span class="switch-track"></span>
+                  <span>Reduce motion</span>
+                </label>
+              </article>
+
+              <article class="card">
+                <div class="card-head"><h2>Behavior</h2></div>
+
+                <div class="field">
+                  <label for="shell-select">Default shell</label>
+                  <select id="shell-select">
+                    <option value="powershell">PowerShell 5.1</option>
+                    <option value="cmd">Command Prompt</option>
+                    <option value="gitbash">Git Bash</option>
+                  </select>
+                  <p class="hint">Applies to new tabs.</p>
+                </div>
+
+                <div class="field">
+                  <label for="start-view">Start view</label>
+                  <select id="start-view">
+                    <option value="terminal">Terminal</option>
+                    <option value="dashboard">Dashboard</option>
+                    <option value="stats">Statistics</option>
+                  </select>
+                </div>
+
+                <div class="field">
+                  <label>Terminal font</label>
+                  <p class="hint" id="font-name">JetBrainsMono Nerd Font Mono</p>
+                </div>
+              </article>
+
+              <article class="card">
+                <div class="card-head"><h2>Data</h2></div>
+                <div class="button-stack">
+                  <button class="btn" id="open-data" type="button">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+                    Open data folder
+                  </button>
+                  <button class="btn" id="reset-stats" type="button">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg>
+                    Reset statistics
+                  </button>
+                  <button class="btn danger" id="reset-settings" type="button">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V5h6v2M7 7l1 13h8l1-13"/></svg>
+                    Reset all settings
+                  </button>
+                </div>
+                <p class="hint">Settings and statistics live in <span id="data-path">%APPDATA%\Infinitium Shell</span>.</p>
+              </article>
+
+              <article class="card about-card">
+                <div class="card-head"><h2>About</h2></div>
+                <div class="about-lockup">
+                  <img src="assets/infinitium.png" alt="">
+                  <div><strong>Infinitium Shell</strong><span id="about-version">v1.0.0</span></div>
+                </div>
+                <div class="about-meta">
+                  <div><span>Terminal</span><strong>xterm.js + ConPTY</strong></div>
+                  <div><span>Runtime</span><strong id="about-runtime">Electron</strong></div>
+                  <div><span>Node</span><strong id="about-node">—</strong></div>
+                  <div><span>Chromium</span><strong id="about-chrome">—</strong></div>
+                </div>
+                <p class="hint">Profile: <span id="about-profile">Infinitium Shell</span></p>
+              </article>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div class="palette-backdrop" id="palette" hidden>
+    <div class="palette" role="dialog" aria-modal="true" aria-label="Command palette">
+      <div class="palette-input-row">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <input id="palette-input" type="text" placeholder="Type a command or action…" autocomplete="off" spellcheck="false">
+        <kbd>Esc</kbd>
+      </div>
+      <div class="palette-list" id="palette-list"></div>
+      <div class="palette-foot">
+        <span><kbd>↑</kbd><kbd>↓</kbd> navigate</span>
+        <span><kbd>↵</kbd> run</span>
+        <span><kbd>Esc</kbd> close</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+
+  <script src="vendor/xterm.js"></script>
+  <script src="vendor/addon-fit.js"></script>
+  <script src="vendor/addon-web-links.js"></script>
+  <script src="js/util.js"></script>
+  <script src="js/terminal.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/stats-view.js"></script>
+  <script src="js/settings-view.js"></script>
+  <script src="js/palette.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

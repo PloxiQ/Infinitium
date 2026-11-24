@@ -1,0 +1,16 @@
+{
+    "name": "Infinitium",
+    "window": {
+        "applicationTheme": "dark",
+        "useMica": true
+    },
+    "tab": {
+        "background": "terminalBackground",
+        "unfocusedBackground": "#00000000",
+        "showCloseButton": "hover"
+    },
+    "tabRow": {
+        "background": "#00000000",
+        "unfocusedBackground": "#0B1020CC"
+    }
+}
